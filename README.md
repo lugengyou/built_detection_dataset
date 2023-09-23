@@ -1,237 +1,45 @@
-<h4 id="1">1. 内容介绍</h4>
+<!--
+ * @Descripttion: 
+ * @version: 
+ * @Author: Lugy
+ * @Date: 2023-09-23 16:10:30
+ * @LastEditors: Andy
+ * @LastEditTime: 2023-09-23 17:24:35
+-->
 
-系列一主要介绍如何在常见的几种数据格式之间进行转换，以及万能中介`csv`格式的使用，这里列出以下几个：
+代码说明：
 
-- csv to coco
-- csv to voc
-- labelme to coco
-- labelme to voc
-- csv to json
+    部分代码参考自： https://github.com/spytensor/prepare_detection_dataset
+    !!!感谢 spytensor 作者提供转换代码样例
 
-<h4 id="2">2. 标准格式</h4>
+修改说明：
 
-在使用转换脚本之前，必须要明确的几种格式
+    修改 csv2labelme.py 代码，使用 "5.3.1" 版本，
+        包括 .json 字段顺序、删除 ImageData 数据
+    
+    添加应用案例转换数据集
+        xml2csv_data：（执行 .xml -> csv 转换）
+            annotations
+            images
+            xml2csv.py
+        csv_m2s_data：（执行 csv 标签转换，csv -> coco） 
+            scrImages
+            srcImages_label.csv
+            csvlabel_mult2single.py # 将 srcImages_label.csv 转换为 csv_labels.csv 格式
 
-<h5 id="2.1">2.1 csv</h5>
+使用说明：
 
-不要一看是`csv`文件就直接拿来运行，如果不是，可以自行修改代码，或者修改标注文件。
+    获得符合条件的 csv 格式数据，可以根据 README_src.md 使用方式调用接口函数进行格式转换
 
-转换脚本支持的csv格式应为以下形式:
-
-- `csv/`
-    - `labels.csv`
-    - `images/`
-        - `image1.jpg`
-        - `image2.jpg`
-        - `...`
-
-`labels.csv` 的形式: 
-
-`/path/to/image,xmin,ymin,xmax,ymax,label`
-
-例如:
-
-```
-/mfs/dataset/face/0d4c5e4f-fc3c-4d5a-906c-105.jpg,450,154,754,341,face
-/mfs/dataset/face/0ddfc5aea-fcdac-421-92dad-144.jpg,143,154,344,341,face
-...
-```
-注：图片路径请使用绝对路径
-
-<h5 id="2.2">2.2 voc</h5>
-
-标准的voc数据格式如下：
-
-- `VOC2007/`
-    - `Annotations/`
-        - `0d4c5e4f-fc3c-4d5a-906c-105.xml`
-        - `0ddfc5aea-fcdac-421-92dad-144/xml`
-        - `...`
-    - `ImageSets/`
-        - `Main/`
-            - `train.txt`
-            - `test.txt`
-            - `val.txt`
-            - `trainval.txt`
-    - `JPEGImages/`
-        - `0d4c5e4f-fc3c-4d5a-906c-105.jpg`
-        - `0ddfc5aea-fcdac-421-92dad-144.jpg`
-        - `...`
-
-<h5 id="2.3">2.3 coco</h5>
-
-此处未使用测试集
-
-- `coco/`
-    - `annotations/`
-        - `instances_train2017.json`
-        - `instances_val2017.json`
-    - `images/`
-        - `train2017/`
-            - `0d4c5e4f-fc3c-4d5a-906c-105.jpg`
-            - `...`
-        - `val2017`
-            - `0ddfc5aea-fcdac-421-92dad-144.jpg`
-            - `...`
-
-<h5 id="2.4">2.4 labelme</h5>
-
-
-- `labelme/`
-    - `0d4c5e4f-fc3c-4d5a-906c-105.json`
-    - `0d4c5e4f-fc3c-4d5a-906c-105.jpg`
-    - `0ddfc5aea-fcdac-421-92dad-144.json`
-    - `0ddfc5aea-fcdac-421-92dad-144.jpg`
-
-Json file 格式:
-（imageData那一块太长了，不展示了）
-
-```json
-{
-  "version": "3.6.16",
-  "flags": {},
-  "shapes": [
-    {
-      "label": "helmet",
-      "line_color": null,
-      "fill_color": null,
-      "points": [
-        [
-          131,
-          269
-        ],
-        [
-          388,
-          457
-        ]
-      ],
-      "shape_type": "rectangle"
-    }
-  ],
-  "lineColor": [
-    0,
-    255,
-    0,
-    128
-  ],
-  "fillColor": [
-    255,
-    0,
-    0,
-    128
-  ],
-  "imagePath": "004ffe6f-c3e2-3602-84a1-ecd5f437b113.jpg",
-  "imageData": ""   # too long ,so not show here
-  "imageHeight": 1080,
-  "imageWidth": 1920
-}
-```
-
-<h4 id="3">3. 如何使用转换脚本</h4>
-
-<h5 id="3.1">3.1 csv2coco</h5>
-
-首先更改`csv2coco.py`中以下几个配置
-
-```
-classname_to_id = {"person": 1}  # for your dataset classes
-csv_file = "labels.csv"  # annatations file path
-image_dir = "images/"    # original image path
-saved_coco_path = "./"   # path to save converted coco dataset
-```
-
-然后运行 `python csv2coco.py`
-
-会自动创建文件夹并复制图片到相应位置，运行结束后得到如下：
-
-- `coco/`
-    - `annotations/`
-        - `instances_train2017.json`
-        - `instances_val2017.json`
-    - `images/`
-        - `train2017/`
-            - `0d4c5e4f-fc3c-4d5a-906c-105.jpg`
-            - `...`
-        - `val2017`
-            - `0ddfc5aea-fcdac-421-92dad-144.jpg`
-            - `...`
-
-<h5 id="3.2">3.2 csv2voc</h5>
-
-首先更改`csv2voc.py`中以下几个配置
-
-```
-csv_file = "labels.csv"
-saved_path = ".VOC2007/" # path to save converted voc dataset     
-image_save_path = "./JPEGImages/"   # converted voc images path
-image_raw_parh = "images/"          # original image path
-```
-
-然后运行 `python csv2voc.py`
-
-同样会自动创建文件夹并复制图片到相应位置，运行结束后得到如下：
-
-
-- `VOC2007/`
-    - `Annotations/`
-        - `0d4c5e4f-fc3c-4d5a-906c-105.xml`
-        - `0ddfc5aea-fcdac-421-92dad-144/xml`
-        - `...`
-    - `ImageSets/`
-        - `Main/`
-            - `train.txt`
-            - `test.txt`
-            - `val.txt`
-            - `trainval.txt`
-    - `JPEGImages/`
-        - `0d4c5e4f-fc3c-4d5a-906c-105.jpg`
-        - `0ddfc5aea-fcdac-421-92dad-144.jpg`
-        - `...`
-
-<h5 id="3.3">3.3 labelme2coco</h5>
-
-首先更改`labelme2coco.py`中以下几个配置
-
-```
-classname_to_id = {"person": 1}  # for your dataset classes
-labelme_path = "labelme/"  # path for labelme dataset
-saved_coco_path = "./"     # path for saved coco dataset
-```
-然后运行 `python labelme2coco.py`，生成文件形式同`csv2coco`
-
-<h5 id="3.4">3.4 labelme2voc</h5>
-
-首先更改`labelme2voc.py`中以下几个配置
-
-```
-labelme_path = "labelme/"  # path for labelme dataset
-saved_coco_path = "./"     # path for saved coco dataset
-```
-然后运行 `python labelme2voc.py`，生成文件形式同`csv2voc`
-
-<h5 id="3.5">3.5 csv2labelme</h5>
-
-首先更改`csv2labelme.py`中以下几个配置
-
-```
-image_path = "./images/"  # path for images
-csv_file = "./"     # path for csv annotations
-```
-然后运行 `python csv2labelme.py`，生成的`json`文件会保存在`image_path`下,切换路径过去,直接`labelme`便
-可以查看标签.
-
-
-<h4 id="4">4. 万能中介csv</h4>
-
-从上面的转换格式中可以看出，并没有给出如何转到csv的，一是因为太过于简单，而是主流检测框架很少支持这种格式的数据输入。以下给出如何将标注信息写入`csv`
-
-```python
-info = [[filename0,"xmin ymin xmax ymax label0"],
-        [filename1,"xmin ymin xmax ymax label1"]]
-csv_labels = open("csv_labels.csv","w")
-for filename,bboxes in info:
-    bbox = bboxes.split(" ")
-    label = bbox[-1]
-    csv_labels.write(filename+","+bbox[0]+","+bbox[1]+","+bbox[2]+","+bbox[3]+","+label+"\n")
-csv_labels.close()
+样例使用说明：
+```bash
+xml 获取 csv 标注文件
+    python xml2csv.py
+[已有 csv 不符合格式，进行 csv 转换
+    python dataset/csv_m2s_data/csvlabel_mult2single.py]
+由 csv 转换为 coco 格式
+    python csv2coco.py
+由 csv 转 labelme
+    cp -r dataset/csv_m2s_data/srcImages dataset/csv_m2s_data/iamges
+    python csv2labelme.py
 ```
